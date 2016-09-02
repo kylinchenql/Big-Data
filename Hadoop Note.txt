@@ -3,25 +3,45 @@ HDFS
 	1.NameNode(NN)
 		1)Main Function: 接受客户端的读写服务receive reading and writing service from client 
 		2)保存文件的元数据信息(Metadate)
-			-1 文件owership和permissions
-			-2 文件包含哪些块
-			-3 Block保存在哪个DataNode(由DataNode启动时上报)
-		3)数据映射关系
-	2.DataNode
-		1)数据的内容
-	3.数据存储单元（Block）
-		1)文件被切分成固定大小的数据块
-			-1 默认数据块64MB，可以配置
-			-2 文件大小不够64MB，则单独存成一个64MB的block
-		2)一个文件的存储方式
-			-1 按大小被切分成若干个block，存储到不同节点上
-			-2 默认每个block都有三个副本
-		3)Block大小和副本(Node)数通过Client端上传文件的时候设置，
-			文件上传成功后，副本(Node)数可以更改，Block Size不可变更
-	
-	
-	
-	
+			-1 文件owership和permissions(保存在磁盘中)
+			-2 文件包含哪些块(保存在磁盘中)
+			-3 Block保存在哪个DataNode(数据不保存在NameNode的磁盘上，由DataNode启动时上报)
+		3)Metadate启动后会加载到内存
+			-1 metadata存储到磁盘的文件名为fsimage
+			-2 Block的位置信息不会保存到fsimage
+			-3 edits记录对metadata的操作的日志
+			-4 新增文件会保存信息在内存和磁盘中
+			-5 删除数据的时候不会直接保存到fsimage，而是记录到edits中，
+					定期保存信息到fsimage中
+	2.Secondary NameNode(SNN)
+		1)不是NN的备份（但可以做备份）
+		2)主要功能是帮助NN合并edits log，减少NN启动时间
+		3)SNN执行合并时机
+			-1 根据配置文件设置的时间间隔fs.checkpoint.period
+				默认3600秒
+			-2 根据配置文件设置edits log大小fs.checkpoint.size规定edits文件的最大值
+				默认64MB，如果文件edits log超过64MB则直接进行合并操作
+	3.DataNode
+		-存储信息，包含数据存储单元（Block）
+			1)文件被切分成固定大小的数据块
+				-1 默认数据块64MB，可以配置
+				-2 文件大小不够64MB，则单独存成一个64MB的block
+			3)一个文件的存储方式
+				-1 按大小被切分成若干个block，存储到不同节点上
+				-2 默认每个block都有三个副本
+			4)Block大小和副本(Node)数通过Client端上传文件的时候设置，
+				文件上传成功后，副本(Node)数可以更改，Block Size不可变更
+			5)启动时汇报block信息给NN
+		-通过主动向NN发送心跳保持与其联系(3秒一次)， 如果NN 10分总没有收到DN心跳，
+			则认为其已经lost，并copy其上面的block到其他的DN
+	4.Block的副本放置策略
+		1) first replica(副本): 放置上传文件的DN；
+			如果是集群外提交，则随机挑选一台磁盘不太满，CPU不太忙的节点
+		2) second replica:放在于第一个副本不同的机架(Rack)的节点上
+				(一个机架Rack使用一个电源，同一个机架传输通常使用同一个交换机
+					所以同一机架速度会快，第三个副本会放置与第二个同一个机架上)
+		3) third replica: 放置于第二个副本相同的机架节点上
+		4) more replica: 随机节点
 	
 	
 	
