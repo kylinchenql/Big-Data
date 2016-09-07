@@ -1,4 +1,5 @@
 HDFS
+	通常用来读取小型文件
 	分为NameNode 和DataNode
 	1.NameNode(NN)
 		1)Main Function: 接受客户端的读写服务receive reading and writing service from client 
@@ -42,8 +43,19 @@ HDFS
 					所以同一机架速度会快，第三个副本会放置与第二个同一个机架上)
 		3) third replica: 放置于第二个副本相同的机架节点上
 		4) more replica: 随机节点
-	
-	
+	5.HDFS文件权限
+		1)文件上传者就是文件的拥有者 r:read; w:write; x:execute;
+			x对于文件忽略，对文件夹表示是否允许访问其内容
+	6.安全模式
+		NameNode启动之后就进入安全模式，该模式只允许查看目录，不允许读写操作。
+		本阶段DataNode会汇报数据地址，NameNode会检查数据副本数量
+		副本数量不够的时候会等待DataNode复制副本完毕
+		强制离开本模式会导致数据丢失
+		
+MR(MapReduce) 分布式计算框架
+	-适合离线计算
+	-移动计算，而不是移动数据
+	-把分析计算的程序分别拷贝到不同的计算机上
 	
 	
 	
