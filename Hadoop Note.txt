@@ -53,18 +53,117 @@ HDFS
 		强制离开本模式会导致数据丢失
 		
 MR(MapReduce) 分布式计算框架
-	-计算超大文件中每个单词出现的次数
-	-适合离线计算
-	-移动计算，而不是移动数据
-	-把分析计算的程序分别拷贝到不同的计算机上
+	- 适合离线计算
+	- 移动计算，而不是移动数据
+	- 把分析计算的程序分别拷贝到不同的计算机上
 	步骤：
 		Input -->
-		1) Splitting -->
-			
+		1) Splitting （把数据块，切成片段）-->
+								- max.split(100M)
+								- min.split(10M)
+								- block(64M)
+								- max(min.split, min(max.split, block)) = 64M 碎片切分算法
 		2) Mapping (键值对，一般是值（单词）做为key，1作为value) --> 
-		3) Shuffling --> 
-		4) Reducing -->
+		3) Shuffling (把Mapper的输出按照某种key值重新切分和组合成n份，
+								把key值符合某种范围的输出送到特定的reducer，
+								也可以简化reducer的过程) --> 
+								- 每一个map task都有一个内存缓冲区（默认100M），存储map输出结果
+								- 当缓冲区快满的时候需要将缓冲区的数据以一个临时文件的方式存放到磁盘，（Spill to disk）
+								- 溢写是由单独线程来完成，不影响往缓冲区写map结果的线程（spill.percent, 默认0.8）
+								- 当溢写线程结束后，需要对这80MB空间的key做排序（Sort，默认按照ask码的规则(字典规则)来进行比较）
+								- Sort之后如果需要进行combiner则执行，否则直接掠过
+									= 如果client设置了Combiner，则会将有相同key的键值对的value加起来，
+											减少溢写到磁盘的数据量
+									=  当整个map task结束后再对磁盘中的这个map task产生的所有临时文件
+											做合并（Merge），这个过程类似于找到数据中key值相同的，对其value
+											进行合并相加，来减少数据传输
+									= reduce 从tasktracker copy数据
+									= copy过来的数据先放入内存缓冲区，这里的缓冲区大小要比map端更灵活，
+											它基于JVM的heap size 设置
+									= merge有三种形式：1）内存到内存，2）内存到磁盘，3）磁盘到磁盘，
+											merge从不同的tasktracker上拿到数据
+		4) Reducing  （根据key相同进行合并）-->
 			FinalResult
+MapReduce的架构
+	- 一主多从架构
+	- 主JobTracker(1.0之后的版本中有，在2.0就没了):
+		负责调度分配每一个子任务task运行于TaskTracker上，如果发现有失败的task，
+			就重新分配其任务到其他节点。每个hadoop集群中只有一个JobTracker，
+			一般运行在Master节点上，但是可以指定任何一台机器进行部署
+	- 从TaskTracker
+		= TaskTracker主动与JobTracker通信，接受作业，并负责直接执行每一个任务。
+			为了减少网络带宽，TaskTracker最好运行在HDFS的DataNode上
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
