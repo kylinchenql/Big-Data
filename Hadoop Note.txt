@@ -53,10 +53,18 @@ HDFS
 		强制离开本模式会导致数据丢失
 		
 MR(MapReduce) 分布式计算框架
+	-计算超大文件中每个单词出现的次数
 	-适合离线计算
 	-移动计算，而不是移动数据
 	-把分析计算的程序分别拷贝到不同的计算机上
-	
+	步骤：
+		Input -->
+		1) Splitting -->
+			
+		2) Mapping (键值对，一般是值（单词）做为key，1作为value) --> 
+		3) Shuffling --> 
+		4) Reducing -->
+			FinalResult
 	
 	
 	
